@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>dsh-pianist · 让 AI 弹一曲钢琴，也看看模型的本事 | DeepSeek Harness 插件</title>
+  <meta name="description" content="dsh-pianist 是 DeepSeek Harness 的钢琴插件：vibe coding 累了，让 AI 弹一曲放松；它弹到什么水平，也是模型能力的一次测验。确定性时间轴驱动，Canvas2D 三角钢琴渲染，曜黑鎏金与樱花珍珠两套皮肤。A deterministic piano performance plugin for DeepSeek Harness.">
+  <meta name="keywords" content="dsh-pianist, DeepSeek Harness, 钢琴插件, vibe coding, piano plugin, 大模型能力测试, LLM benchmark, MIDI, 钢琴演奏, piano performance, canvas renderer, 三角钢琴, grand piano, 确定性时间轴, deterministic timeline, Web Audio, 采样钢琴">
+  <meta name="author" content="Laplace-bit">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://laplace-bit.github.io/dsh-pianist/">
+  <meta name="theme-color" content="#050505">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="dsh-pianist">
+  <meta property="og:title" content="dsh-pianist · 让 AI 弹一曲钢琴，也看看模型的本事">
+  <meta property="og:description" content="vibe coding 累了，让 AI 弹一曲钢琴放松。它弹得多好，就是模型的本事。DeepSeek Harness 钢琴插件，是玩具，也是考卷。">
+  <meta property="og:url" content="https://laplace-bit.github.io/dsh-pianist/">
+  <meta property="og:image" content="https://laplace-bit.github.io/dsh-pianist/og-cover.png?v=0.1.0">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="2842">
+  <meta property="og:image:height" content="1682">
+  <meta property="og:image:alt" content="dsh-pianist 曜黑鎏金三角钢琴">
+  <meta property="og:locale" content="zh_CN">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="dsh-pianist · 让 AI 弹一曲钢琴，也看看模型的本事">
+  <meta name="twitter:description" content="vibe coding 累了，让 AI 弹一曲钢琴放松。DeepSeek Harness 钢琴插件，是玩具，也是考卷。">
+  <meta name="twitter:image" content="https://laplace-bit.github.io/dsh-pianist/og-cover.png?v=0.1.0">
+
+  <!-- GEO / structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "dsh-pianist",
+    "alternateName": ["DSH Pianist", "dsh-pianist 钢琴插件"],
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "url": "https://laplace-bit.github.io/dsh-pianist/",
+    "description": "A DeepSeek Harness plugin that lets an AI model perform a piano piece. It is a way to relax after a long vibe-coding session, and a playful, deterministic test of how well a model can execute a score: pitch, rhythm, velocity and pedaling. It renders a grand piano on Canvas2D with two premium skin families (曜黑鎏金 Lacquer Gold and 樱花珍珠 Sakura Pearl) and plays deterministic, sample-based piano audio from a musical timeline.",
+    "keywords": "piano, DeepSeek Harness, plugin, MIDI, canvas renderer, grand piano, deterministic timeline, Web Audio, sample-based synthesis",
+    "softwareVersion": "0.1.0",
+    "license": "https://github.com/Laplace-bit/dsh-pianist/blob/main/LICENSE",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Laplace-bit" },
+    "featureList": [
+      "Deterministic musical timeline (PPQ tempo maps, time signatures, pedals)",
+      "Canvas2D real-time grand-piano renderer with two premium skin families",
+      "Sample-based piano audio with offline preload",
+      "Interactive keyboard with pointer glissando and computer-key playing",
+      "Ambient atmosphere: falling-note comets, water reflection, mist, grain, meteors",
+      "Web Component API for the DeepSeek Harness host"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "dsh-pianist 是什么？",
+        "acceptedAnswer": { "@type": "Answer", "text": "dsh-pianist 是 DeepSeek Harness 的钢琴演奏插件：它从确定性时间轴读取音符，用 Canvas2D 实时渲染一台三角钢琴，并播放基于采样钢琴的声音。" }
+      },
+      {
+        "@type": "Question",
+        "name": "How does dsh-pianist render the piano?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It renders a grand piano on Canvas2D from pure skin data. Each skin family owns material, lighting and atmosphere tokens; the renderer owns geometry, so new skins never require a new render branch." }
+      },
+      {
+        "@type": "Question",
+        "name": "What skins does dsh-pianist ship with?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Two families: 曜黑鎏金 Lacquer Gold, a black high-gloss concert grand with gold hardware, and 樱花珍珠 Sakura Pearl, a pearl-white grand with rose-gold details beneath a soft sakura sky." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the piano performance deterministic?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Note-generated ribbons and impacts come from a shared timeline, never Math.random(); ambient motes use a seeded RNG so pause, seek and replay keep a stable atmosphere." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I install dsh-pianist?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Run dsh plugin --profile web add dsh-pianist in DeepSeek Harness and restart DSH. For standalone web pages, install from npm and register the dsh-piano-view element. See the README for details." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Premium type system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #0a0a0c;
+      --ink-raised: #121216;
+      --glass: rgba(255, 255, 255, 0.045);
+      --glass-strong: rgba(255, 255, 255, 0.075);
+      --hairline: rgba(255, 255, 255, 0.09);
+      --hairline-soft: rgba(255, 255, 255, 0.055);
+      --text: #f4f1ea;
+      --text-muted: rgba(244, 241, 234, 0.62);
+      --text-faint: rgba(244, 241, 234, 0.4);
+      --gold: #e6b34f;
+      --gold-soft: #d9a954;
+      --blush: #f3a6c3;
+      --peach: #f2bd88;
+      --violet: #a99bff;
+      --ease: cubic-bezier(0.32, 0.72, 0, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --radius-xl: 2rem;
+      --radius-lg: 1.5rem;
+      --radius-md: 1rem;
+      font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 92px; }
+    body {
+      margin: 0;
+      background: var(--ink);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+    ::selection { background: rgba(230, 179, 79, 0.28); color: #fff; }
+
+    .display { font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif; letter-spacing: -0.03em; }
+    .serif { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: 0; }
+    .gold { color: var(--gold); }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+
+    /* Fixed film grain, pointer-events none, never on scrolling containers. */
+    .grain {
+      position: fixed; inset: 0; z-index: 90; pointer-events: none; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+
+    /* -------- Fluid Island Nav -------- */
+    .nav {
+      position: fixed; z-index: 60; top: clamp(14px, 2.4vw, 26px); left: 50%;
+      display: flex; align-items: center; gap: 6px; width: max-content; max-width: calc(100vw - 24px);
+      transform: translateX(-50%);
+      padding: 8px 10px 8px 18px; border-radius: 999px;
+      background: rgba(10, 10, 12, 0.62);
+      border: 1px solid var(--hairline);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+    }
+    .nav .brand { display: flex; align-items: baseline; gap: 9px; padding-right: 6px; font-weight: 700; letter-spacing: 0.04em; font-size: 13px; }
+    .nav .brand .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); align-self: center; }
+    .nav-links { display: flex; align-items: center; gap: 2px; }
+    .nav-link {
+      padding: 8px 12px; border-radius: 999px; color: var(--text-muted); font-size: 13px; font-weight: 500;
+      transition: color 400ms var(--ease), background-color 400ms var(--ease);
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+    .nav-cta {
+      display: inline-flex; align-items: center; gap: 9px; padding: 9px 18px; border-radius: 999px;
+      background: linear-gradient(150deg, #f7e7bd, var(--gold) 60%, #b98a34);
+      color: #171205; font-size: 13px; font-weight: 700;
+      box-shadow: 0 10px 26px rgba(230, 179, 79, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      transition: transform 500ms var(--ease), box-shadow 500ms var(--ease);
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(230, 179, 79, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+    .nav-cta:active { transform: scale(0.97); }
+    .nav-cta svg { transition: transform 500ms var(--ease); }
+    .nav-cta:hover svg { transform: translate(2px, -1px); }
+
+    /* -------- Layout rhythm -------- */
+    main { position: relative; z-index: 1; }
+    section { position: relative; padding: clamp(88px, 12vw, 150px) clamp(20px, 5vw, 64px); }
+    .shell { max-width: 1180px; margin: 0 auto; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--hairline-soft); background: rgba(255, 255, 255, 0.03);
+      color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    }
+    .eyebrow::before { width: 18px; height: 1px; background: currentColor; opacity: 0.7; content: ""; }
+
+    h1, h2, h3 { margin: 0; font-weight: 600; }
+    h1 { font-size: clamp(44px, 8vw, 104px); line-height: 0.98; letter-spacing: -0.045em; }
+    h2 { font-size: clamp(30px, 4.6vw, 54px); line-height: 1.02; letter-spacing: -0.03em; }
+    .lede { max-width: 34em; margin: 0; color: var(--text-muted); font-size: clamp(16px, 1.5vw, 19px); line-height: 1.7; }
+    .lede em { color: var(--text); }
+
+    /* -------- Hero -------- */
+    .hero { min-height: 100dvh; display: flex; align-items: center; padding-top: clamp(120px, 16vh, 160px); overflow: hidden; }
+    .hero::before, .hero::after {
+      content: ""; position: absolute; pointer-events: none; border-radius: 50%;
+      filter: blur(90px); opacity: 0.5; will-change: transform;
+    }
+    .hero::before { width: 52vw; height: 52vw; top: -20vw; left: -12vw; background: radial-gradient(circle, rgba(230, 179, 79, 0.5), rgba(230, 179, 79, 0) 62%); }
+    .hero::after { width: 44vw; height: 44vw; top: 6vw; right: -14vw; background: radial-gradient(circle, rgba(243, 166, 195, 0.42), rgba(243, 166, 195, 0) 60%); }
+    .hero .shell { position: relative; width: 100%; }
+    .hero-copy { max-width: 860px; margin-bottom: clamp(44px, 6vw, 72px); }
+    .hero-copy h1 { margin-top: 22px; }
+    .hero-copy h1 .serif { color: var(--gold); }
+    .hero-copy .lede { margin-top: 26px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 38px; align-items: center; }
+
+    /* Magnetic button-in-button CTA */
+    .btn {
+      position: relative; display: inline-flex; align-items: center; gap: 14px;
+      padding: 15px 20px 15px 26px; border-radius: 999px;
+      font-size: 15px; font-weight: 600;
+      transition: transform 600ms var(--ease), box-shadow 600ms var(--ease), background-color 600ms var(--ease), border-color 600ms var(--ease);
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn .icon {
+      display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%;
+      transition: transform 600ms var(--ease), background-color 600ms var(--ease);
+    }
+    .btn:hover .icon { transform: translate(2px, -2px) scale(1.06); }
+    .btn-primary {
+      background: linear-gradient(150deg, #f7e7bd, var(--gold) 58%, #b98a34); color: #171205;
+      box-shadow: 0 18px 40px rgba(230, 179, 79, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    .btn-primary:hover { box-shadow: 0 24px 52px rgba(230, 179, 79, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
+    .btn-primary .icon { background: rgba(23, 18, 5, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    .btn-ghost { border: 1px solid var(--hairline); background: rgba(255, 255, 255, 0.035); color: var(--text); }
+    .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); }
+    .btn-ghost .icon { background: rgba(255, 255, 255, 0.06); }
+
+    /* -------- Double-bezel stage -------- */
+    .stage-bezel {
+      position: relative; padding: 12px; border-radius: calc(var(--radius-xl) + 8px);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--hairline);
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .stage-core {
+      position: relative; overflow: hidden; border-radius: var(--radius-xl);
+      background: #07070a; border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+      aspect-ratio: 16 / 9;
+    }
+    .stage-core dsh-piano-view { display: block; width: 100%; height: 100%; }
+
+    .stage-tabs { display: flex; align-items: center; gap: 6px; padding: 6px; width: max-content; margin: 18px auto 0; border-radius: 999px; border: 1px solid var(--hairline-soft); background: rgba(255, 255, 255, 0.03); }
+    .stage-tab { padding: 9px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-muted); transition: color 400ms var(--ease), background-color 400ms var(--ease), box-shadow 400ms var(--ease); }
+    .stage-tab:hover { color: var(--text); }
+    .stage-tab[aria-pressed="true"] { color: #171205; background: linear-gradient(150deg, #f7e7bd, var(--gold)); box-shadow: 0 8px 20px rgba(230, 179, 79, 0.32); }
+
+    /* Transport rail */
+    .transport {
+      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+      width: 100%; margin-top: 18px; padding: 12px 16px; border-radius: var(--radius-md);
+      background: var(--ink-raised); border: 1px solid var(--hairline-soft);
+    }
+    .transport-actions { display: flex; align-items: center; gap: 8px; }
+    .t-btn {
+      display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%;
+      color: var(--text-muted); border: 1px solid var(--hairline-soft); background: rgba(255, 255, 255, 0.03);
+      transition: color 400ms var(--ease), border-color 400ms var(--ease), background-color 400ms var(--ease), transform 400ms var(--ease);
+    }
+    .t-btn:hover { color: var(--text); border-color: var(--hairline); }
+    .t-btn:active { transform: scale(0.94); }
+    .t-btn.primary { color: #171205; background: linear-gradient(150deg, #f7e7bd, var(--gold)); border-color: transparent; box-shadow: 0 8px 22px rgba(230, 179, 79, 0.3); }
+    .t-slider { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .t-time { min-width: 58px; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-muted); }
+    .t-time.current { color: var(--text); }
+    input[type="range"] { flex: 1; min-width: 60px; height: 26px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 3px; border-radius: 999px; background: linear-gradient(90deg, var(--gold) 0 var(--seek-progress, 0%), rgba(255, 255, 255, 0.14) var(--seek-progress, 0%) 100%); }
+    input[type="range"]::-moz-range-track { height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); }
+    input[type="range"]::-moz-range-progress { height: 3px; border-radius: 999px; background: var(--gold); }
+    input[type="range"]::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -5.5px; appearance: none; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(230, 179, 79, 0.22), 0 2px 6px rgba(0, 0, 0, 0.5); }
+    input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(230, 179, 79, 0.22); }
+    .t-right { display: flex; align-items: center; gap: 10px; }
+    select, .rate { height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--hairline-soft); background: rgba(255, 255, 255, 0.04); color: var(--text-muted); font: inherit; font-size: 13px; }
+
+    /* -------- Section heading -------- */
+    .section-head { max-width: 680px; margin-bottom: clamp(40px, 5vw, 64px); }
+    .section-head h2 { margin-top: 20px; }
+    .section-head .lede { margin-top: 18px; }
+
+    /* -------- Bento features -------- */
+    .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .bento .card { border-radius: var(--radius-xl); }
+    .card {
+      position: relative; padding: clamp(24px, 3vw, 36px); overflow: hidden;
+      border-radius: var(--radius-lg); background: var(--glass);
+      border: 1px solid var(--hairline-soft);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 24px 60px rgba(0, 0, 0, 0.35);
+      transition: transform 700ms var(--ease), border-color 700ms var(--ease), background-color 700ms var(--ease);
+    }
+    .card:hover { transform: translateY(-3px); border-color: var(--hairline); background: var(--glass-strong); }
+    .card .icon-wrap {
+      display: grid; width: 46px; height: 46px; place-items: center; margin-bottom: 22px; border-radius: 14px;
+      background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+      border: 1px solid var(--hairline-soft); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .card h3 { font-size: 20px; letter-spacing: -0.01em; }
+    .card p { margin: 10px 0 0; color: var(--text-muted); font-size: 15px; line-height: 1.65; }
+    .card .tag { display: inline-flex; margin-top: 20px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--hairline-soft); color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; }
+    .b-span-8 { grid-column: span 8; } .b-span-4 { grid-column: span 4; }
+    .card.accent-gold .icon-wrap { color: var(--gold); } .card.accent-gold::after { background: radial-gradient(circle at 85% 15%, rgba(230, 179, 79, 0.16), transparent 55%); }
+    .card.accent-blush .icon-wrap { color: var(--blush); } .card.accent-blush::after { background: radial-gradient(circle at 85% 15%, rgba(243, 166, 195, 0.14), transparent 55%); }
+    .card.accent-violet .icon-wrap { color: var(--violet); } .card.accent-violet::after { background: radial-gradient(circle at 85% 15%, rgba(169, 155, 255, 0.15), transparent 55%); }
+    .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+
+    /* -------- Skins showcase -------- */
+    .skins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .skin-card .stage-core { aspect-ratio: 16 / 10; }
+    .skin-card h3 { margin-top: 22px; font-size: clamp(20px, 2vw, 26px); }
+    .skin-card h3 .serif { font-size: 1.08em; }
+    .skin-card .lede { font-size: 14.5px; }
+    .skin-swatch { display: flex; gap: 8px; margin-top: 18px; }
+    .swatch { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--hairline); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15); }
+
+    /* -------- Code card -------- */
+    .code-bezel { margin-top: 30px; padding: 12px; border-radius: calc(var(--radius-lg) + 6px); background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)); border: 1px solid var(--hairline); }
+    .code-core { position: relative; overflow: hidden; border-radius: var(--radius-md); background: #0b0b10; border: 1px solid rgba(255, 255, 255, 0.06); }
+    .code-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .code-bar i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
+    .code-bar span { margin-left: 8px; color: var(--text-faint); font-size: 12px; letter-spacing: 0.1em; }
+    pre { margin: 0; padding: 22px 24px; overflow-x: auto; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.7; color: #d9d4c9; }
+    pre .cm { color: rgba(244, 241, 234, 0.34); } pre .k { color: var(--violet); } pre .s { color: var(--peach); } pre .n { color: var(--gold); }
+
+    /* -------- Showreel / video slot -------- */
+    .showreel .stage-core { aspect-ratio: 16 / 9; }
+    .reel-poster {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+      background:
+        radial-gradient(60% 70% at 50% 0%, rgba(230, 179, 79, 0.14), transparent 60%),
+        radial-gradient(50% 60% at 80% 100%, rgba(243, 166, 195, 0.12), transparent 60%),
+        linear-gradient(180deg, #0a0a10, #070709);
+    }
+    .reel-poster video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 700ms var(--ease); }
+    .reel-poster.is-live video { opacity: 1; }
+    .reel-poster.is-live .reel-idle { opacity: 0; }
+    .reel-idle { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; transition: opacity 600ms var(--ease); }
+    .reel-play {
+      display: grid; width: 84px; height: 84px; place-items: center; border-radius: 50%;
+      background: linear-gradient(150deg, #f7e7bd, var(--gold)); color: #171205;
+      box-shadow: 0 24px 60px rgba(230, 179, 79, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      transition: transform 600ms var(--ease), box-shadow 600ms var(--ease);
+    }
+    .reel-play:hover { transform: scale(1.06); box-shadow: 0 30px 70px rgba(230, 179, 79, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
+    .reel-play:active { transform: scale(0.96); }
+    .reel-idle p { margin: 0; color: var(--text-muted); font-size: 15px; }
+    .reel-idle .lbl { color: var(--text); font-weight: 600; font-size: 17px; }
+
+    /* -------- FAQ -------- */
+    .faq-list { max-width: 820px; margin: 0 auto; display: grid; gap: 12px; }
+    .faq-item { border-radius: var(--radius-lg); background: var(--glass); border: 1px solid var(--hairline-soft); overflow: hidden; transition: border-color 500ms var(--ease), background-color 500ms var(--ease); }
+    .faq-item.open { border-color: var(--hairline); background: var(--glass-strong); }
+    .faq-q { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; padding: 22px 26px; text-align: left; font-size: 16px; font-weight: 600; }
+    .faq-q .plus { position: relative; flex: 0 0 22px; width: 22px; height: 22px; }
+    .faq-q .plus::before, .faq-q .plus::after { content: ""; position: absolute; background: var(--gold); transition: transform 500ms var(--ease); }
+    .faq-q .plus::before { left: 0; right: 0; top: 10px; height: 2px; }
+    .faq-q .plus::after { top: 0; bottom: 0; left: 10px; width: 2px; }
+    .faq-item.open .plus::after { transform: rotate(90deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 600ms var(--ease); }
+    .faq-item.open .faq-a { max-height: 320px; }
+    .faq-a p { margin: 0; padding: 0 26px 24px; color: var(--text-muted); font-size: 15px; line-height: 1.7; }
+
+    /* -------- Community / WeChat QR -------- */
+    .qr-bezel {
+      width: max-content; max-width: 100%; margin: 0 auto; padding: 12px; border-radius: calc(var(--radius-xl) + 8px);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--hairline);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .qr-core {
+      position: relative; width: 232px; height: 232px; overflow: hidden; border-radius: var(--radius-lg);
+      background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.92);
+    }
+    .qr-core img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 600ms var(--ease); }
+    .qr-core img.is-loaded { opacity: 1; }
+    .qr-placeholder {
+      position: absolute; inset: 0; display: grid; place-items: center; gap: 12px; padding: 16px;
+      background: linear-gradient(150deg, #101014, #17171c); color: var(--text-muted); text-align: center;
+    }
+    /* display:grid above overrides the UA rule for [hidden]; restore it so the
+       swap-to-QR script can actually hide the placeholder. */
+    .qr-placeholder[hidden] { display: none; }
+    .qr-placeholder svg { color: var(--gold); opacity: 0.85; }
+    .qr-placeholder p { margin: 0; font-size: 13px; line-height: 1.5; }
+    .qr-caption { margin: 16px 0 0; color: var(--text-muted); font-size: 13px; letter-spacing: 0.04em; text-align: center; }
+
+    /* -------- Footer -------- */
+    footer { position: relative; z-index: 1; padding: 70px clamp(20px, 5vw, 64px) 90px; border-top: 1px solid var(--hairline-soft); }
+    .footer-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; justify-content: space-between; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: 0.05em; font-size: 14px; }
+    .footer-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+    .footer-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .footer-links a { padding: 8px 12px; border-radius: 999px; color: var(--text-muted); font-size: 13px; transition: color 400ms var(--ease), background-color 400ms var(--ease); }
+    .footer-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+    .footer-note { margin-top: 34px; color: var(--text-faint); font-size: 12.5px; }
+
+    /* -------- Reveal choreography --------
+       Content is visible by default. JS adds `reveal-pending` only when it is
+       actually running, so a failed module or blocked observer never blanks
+       the page. */
+    .reveal { transition: opacity 900ms var(--ease), transform 900ms var(--ease), filter 900ms var(--ease); transition-delay: var(--d, 0ms); will-change: transform, opacity, filter; }
+    .reveal-pending { opacity: 0; transform: translateY(28px); filter: blur(8px); }
+    .reveal-pending.is-in { opacity: 1; transform: none; filter: none; }
+
+    /* -------- Mobile collapse -------- */
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .bento { grid-template-columns: 1fr; }
+      .b-span-8, .b-span-4 { grid-column: span 1; }
+      .skins-grid { grid-template-columns: 1fr; }
+      .hero { padding-top: clamp(110px, 18vh, 140px); }
+      .transport { grid-template-columns: 1fr; }
+      .t-right { justify-content: space-between; }
+    }
+    @media (max-width: 560px) {
+      section { padding-inline: 16px; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions .btn { justify-content: space-between; }
+      .stage-tabs { width: 100%; justify-content: center; }
+      .stage-tab { flex: 1; text-align: center; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+      .reveal-pending { opacity: 1; transform: none; filter: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <nav class="nav" aria-label="主导航">
+    <a class="brand display" href="#top"><span class="dot"></span>dsh-pianist</a>
+    <div class="nav-links">
+      <a class="nav-link" href="#showcase">Showcase</a>
+      <a class="nav-link" href="#skins">Skins</a>
+      <a class="nav-link" href="#builders">安装</a>
+      <a class="nav-link" href="#reel">Film</a>
+      <a class="nav-link" href="#community">交流</a>
+      <a class="nav-link" href="#faq">FAQ</a>
+    </div>
+    <a class="nav-cta" href="https://github.com/Laplace-bit/dsh-pianist" target="_blank" rel="noopener">GitHub
+      <span class="icon" style="display:grid;width:26px;height:26px;place-items:center;border-radius:50%;background:rgba(23,18,5,0.18)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      </span>
+    </a>
+  </nav>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="shell">
+        <div class="hero-copy">
+          <span class="eyebrow reveal">DeepSeek Harness · Piano Plugin</span>
+          <h1 id="hero-title" class="display reveal">写累了，<br>让 AI 弹<span class="gold">一会儿</span></h1>
+          <p class="lede reveal" style="--d:120ms">vibe coding 累了，让 Agent 弹一首钢琴。它弹得多好，就是模型的本事。</p>
+          <div class="hero-actions reveal" style="--d:200ms">
+            <button class="btn btn-primary" type="button" data-scroll="#stage">
+              <span>试听一曲</span>
+              <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+            </button>
+            <a class="btn btn-ghost" href="#builders">
+              <span>集成到你的 Agent</span>
+              <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 16-4 4 4 4M16 7l4-4 4 4"/><path d="m17 15 4 4-4 4M8 9l-4 4 4 4"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/></svg></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Live stage: double-bezel glass frame -->
+        <div id="stage" class="stage-bezel reveal" style="--d:260ms">
+          <div class="stage-core" id="heroStage" aria-label="实时钢琴演奏舞台">
+            <dsh-piano-view id="piano" data-stage="hero"></dsh-piano-view>
+          </div>
+        </div>
+        <div class="stage-tabs reveal" style="--d:320ms" role="group" aria-label="皮肤切换">
+          <button class="stage-tab" type="button" data-skin="lacquer-gold" aria-pressed="true">曜黑鎏金</button>
+          <button class="stage-tab" type="button" data-skin="seaside-glass" aria-pressed="false">樱花珍珠</button>
+        </div>
+        <div class="transport reveal" style="--d:380ms" aria-label="播放控制">
+          <div class="transport-actions">
+            <button class="t-btn primary" id="playBtn" type="button" aria-label="播放">
+              <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.4v13.2L19 12 8 5.4Z"/></svg>
+              <svg id="pauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>
+            </button>
+            <button class="t-btn" id="stopBtn" type="button" aria-label="停止">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.4"/></svg>
+            </button>
+          </div>
+          <div class="t-slider">
+            <span class="t-time current" id="timeCurrent">0:00</span>
+            <input id="seek" type="range" min="0" max="1000" value="0" aria-label="播放进度">
+            <span class="t-time" id="timeTotal">0:00</span>
+          </div>
+          <div class="t-right">
+            <label class="rate" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 14px">
+              <span style="color:var(--text-faint);font-size:12px">速度</span>
+              <select id="rate" aria-label="播放速度" style="background:transparent;border:0;color:var(--text-muted);font:inherit;font-size:13px;outline:none">
+                <option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+              </select>
+            </label>
+            <button class="t-btn" id="fullscreenBtn" type="button" aria-label="全屏">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES BENTO -->
+    <section id="showcase" aria-labelledby="features-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <h2 id="features-title" class="display">是玩具，<span class="gold">也是考卷</span></h2>
+          <p class="lede">模型要读懂乐谱、算准节奏、安排好踏板。因为确定性时间轴，同一份乐谱，每次都是同一张考卷。</p>
+        </div>
+        <div class="bento">
+          <article class="card b-span-8 accent-gold reveal">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l6 4V8l6 4V3h6v18"/></svg></div>
+            <h3 class="display">确定性时间轴</h3>
+            <p>音符驱动的彩带与冲击来自共享时间线，绝不依赖 <code>Math.random()</code>；环境微粒使用种子随机数，暂停、拖动、重播始终保持稳定的氛围。同一段乐谱，每一次都演奏得一模一样。</p>
+            <span class="tag">PPQ Tempo Maps · Pedal · Deterministic</span>
+          </article>
+          <article class="card b-span-4 accent-blush reveal" style="--d:100ms">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M9 21v-9M14 21V8M19 21V5"/></svg></div>
+            <h3 class="display">真实采样音色</h3>
+            <p>录音室采样的三角钢琴，多层力度，预载之后点一下就响。</p>
+            <span class="tag">Sample-Based · Multi-Velocity</span>
+          </article>
+          <article class="card b-span-4 accent-gold reveal">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 22v-4M12 22v-4M16 22v-4M4 12h16"/></svg></div>
+            <h3 class="display">实时 Canvas2D 渲染</h3>
+            <p>琴身离线预渲染成静态图层，琴键缓存精灵；每帧只动画键位、彩带与冲击，帧成本恒定。</p>
+            <span class="tag">Sprite Cache · Opaque Static Layer</span>
+          </article>
+          <article class="card b-span-4 accent-violet reveal" style="--d:100ms">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg></div>
+            <h3 class="display">氛围舞台</h3>
+            <p>落键溅起涟漪和金光，水面倒影、薄雾、流星雨跟着演奏的强弱起伏。</p>
+            <span class="tag">Comets · Reflection · Mist · Grain</span>
+          </article>
+          <article class="card b-span-8 accent-blush reveal" style="--d:140ms">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 3-6 3Z"/></svg></div>
+            <h3 class="display">Web Component · 为 Agent 而生</h3>
+            <p>一个 <code>&lt;dsh-piano-view&gt;</code> 元素即可接入 DeepSeek Harness。设置乐谱、选择皮肤、请求沉浸式舞台，剩下的交给引擎。长乐段可以用紧凑音符对象，减少工具调用的延迟。</p>
+            <span class="tag">setScore · setPianistSettings · requestImmersive</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SKINS SHOWCASE -->
+    <section id="skins" aria-labelledby="skins-title" style="background:linear-gradient(180deg, transparent, rgba(255,255,255,0.02))">
+      <div class="shell">
+        <div class="section-head reveal">
+          <h2 id="skins-title" class="display">两套皮肤，<span class="gold">两种气质</span></h2>
+          <p class="lede">材质、灯光、氛围都是数据。想加新皮肤，不用动渲染器。</p>
+        </div>
+        <div class="skins-grid">
+          <article class="card skin-card reveal">
+            <div class="stage-bezel" style="padding:10px"><div class="stage-core">
+              <dsh-piano-view id="pianoLacquer" data-skin-stage="lacquer-gold"></dsh-piano-view>
+            </div></div>
+            <h3 class="display">曜黑鎏金 <span class="serif">Lacquer Gold</span></h3>
+            <p class="lede">黑色高光音乐会三角琴，立起琴盖，暖金内饰与金饰硬件。深色舞台之上，金色音板在落键时泛起鎏光。</p>
+            <div class="skin-swatch" aria-hidden="true">
+              <span class="swatch" style="background:#060708"></span>
+              <span class="swatch" style="background:#8a5818"></span>
+              <span class="swatch" style="background:#e6b34f"></span>
+              <span class="swatch" style="background:#f7e7bd"></span>
+            </div>
+          </article>
+          <article class="card skin-card reveal" style="--d:120ms">
+            <div class="stage-bezel" style="padding:10px"><div class="stage-core">
+              <dsh-piano-view id="pianoSeaside" data-skin-stage="seaside-glass"></dsh-piano-view>
+            </div></div>
+            <h3 class="display">樱花珍珠 <span class="serif">Sakura Pearl</span></h3>
+            <p class="lede">珍珠白琴身配玫瑰金细节，樱花天之下漂浮着音符。轻雾与蜜桃地平线光，让演奏温柔而透亮。</p>
+            <div class="skin-swatch" aria-hidden="true">
+              <span class="swatch" style="background:#fff9f7"></span>
+              <span class="swatch" style="background:#d19aa4"></span>
+              <span class="swatch" style="background:#f3a6c3"></span>
+              <span class="swatch" style="background:#ffeef0"></span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALL & USAGE -->
+    <section id="builders" aria-labelledby="builders-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <h2 id="builders-title" class="display">一条命令安装，<br><span class="gold">开口就能点歌</span></h2>
+          <p class="lede">装好插件、启动界面，然后用自然语言让 Agent 弹琴。完整说明见 GitHub README。</p>
+        </div>
+        <div class="bento">
+          <article class="card b-span-8 accent-gold reveal">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+            <h3 class="display">安装</h3>
+            <p>在 DeepSeek Harness 源码仓库里执行：</p>
+            <pre style="margin-top:14px;padding:16px 18px;border-radius:12px;background:#0b0b10;border:1px solid rgba(255,255,255,0.06);overflow-x:auto;font-size:13px;color:#d9d4c9;">pnpm dsh plugin --profile web add dsh-pianist</pre>
+            <p>然后启动界面 <code>pnpm dsh web</code>。npm 包自带构建产物，无需任何构建步骤。</p>
+            <span class="tag">dsh plugin add · 开箱即用</span>
+          </article>
+          <article class="card b-span-4 accent-blush reveal" style="--d:100ms">
+            <div class="icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.2-2.6 5.6-.8.8-1.4 1.9-1.4 3V19a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-1.4c0-1.1-.6-2.2-1.4-3C6.2 13.2 5 11.4 5 9a7 7 0 0 1 7-7ZM9 22h6"/></svg></div>
+            <h3 class="display">使用</h3>
+            <p>直接用自然语言点歌，Agent 会把整段乐谱交给钢琴：</p>
+            <p style="color:var(--text)">“请弹一下《欢乐颂》前八小节，双手都要，带延音踏板。”<br><br>“来一段 C 大调音阶，100 BPM，放慢一点。”</p>
+            <span class="tag">Settings → Plugins → Pianist 调皮肤与画质</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOWREEL / VIDEO SLOT -->
+    <section id="reel" class="showreel" aria-labelledby="reel-title" style="background:linear-gradient(180deg, transparent, rgba(255,255,255,0.02))">
+      <div class="shell">
+        <div class="section-head reveal">
+          <h2 id="reel-title" class="display">看一段<span class="gold">成片</span></h2>
+          <p class="lede">dsh-pianist 的演奏实录，点开就看。</p>
+        </div>
+        <div class="stage-bezel reveal" style="--d:100ms">
+          <div class="stage-core">
+            <div class="reel-poster" id="reelPoster">
+              <!--
+                演奏短片：docs/showreel.mp4。替换视频时保持文件名，
+                或同步更新下面的 <source src>。
+              -->
+              <video id="reelVideo" preload="metadata" playsinline
+                     poster="" aria-label="dsh-pianist 演奏短片">
+                <source src="showreel.mp4?v=0.1.0" type="video/mp4">
+              </video>
+              <div class="reel-idle">
+                <button class="reel-play" id="reelPlay" type="button" aria-label="播放短片">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px"><path d="M8 5.4v13.2L19 12 8 5.4Z"/></svg>
+                </button>
+                <p class="lbl" id="reelLabel">Showreel · 点击播放</p>
+                <p id="reelSub">演奏短片已就绪</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" aria-labelledby="faq-title">
+      <div class="shell">
+        <div class="section-head reveal" style="margin-inline:auto;text-align:center">
+          <span class="eyebrow" style="margin-inline:auto">FAQ</span>
+          <h2 id="faq-title" class="display">常见问题</h2>
+        </div>
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>dsh-pianist 是什么？</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>dsh-pianist 是 DeepSeek Harness 的钢琴插件。vibe coding 累了，让 AI 弹一首放松；它弹到什么水平，也是模型能力的一次测验。是玩具，也是考卷。</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>为什么用钢琴来考验大模型？</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>弹琴要求模型一次执行整段乐谱：读准音高、算准节奏、安排好力度与踏板。dsh-pianist 用确定性时间轴，同一份乐谱每次都是同一张考卷，模型的本事一弹便知。</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>How does it render the piano?</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>The renderer is skin-driven: every color, material and atmosphere flag comes from a pure-data PianoSkin. The renderer owns geometry; skins own material, lighting and atmosphere tokens. New skins never require a new render branch.</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>What skins does it ship with?</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>Two families: 曜黑鎏金 Lacquer Gold, a black high-gloss concert grand with gold hardware; and 樱花珍珠 Sakura Pearl, a pearl-white grand with rose-gold details beneath a soft sakura sky.</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>Is playback deterministic?</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>Yes. Note-generated ribbons and impacts come from a shared timeline, never Math.random(); ambient motes use a seeded RNG, so pause, seek and replay keep a stable atmosphere.</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false"><span>How do I install it?</span><span class="plus" aria-hidden="true"></span></button>
+            <div class="faq-a"><p>In DeepSeek Harness, run dsh plugin --profile web add dsh-pianist and restart. For standalone web pages, install from npm and register the dsh-piano-view element. The README has the details.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMUNITY / WECHAT GROUP -->
+    <section id="community" aria-labelledby="community-title" style="background:linear-gradient(180deg, transparent, rgba(255,255,255,0.02))">
+      <div class="shell">
+        <div class="section-head reveal" style="margin-inline:auto;text-align:center">
+          <h2 id="community-title" class="display">一起聊聊，<span class="gold">弹过的曲子</span></h2>
+          <p class="lede" style="margin-inline:auto">交流用法、反馈问题，把模型弹的曲子发进来。扫码加入微信交流群。</p>
+        </div>
+        <div class="qr-bezel reveal" style="--d:100ms">
+          <div class="qr-core">
+            <!--
+              微信群二维码：把图片放到 docs/wechat-qr.png（或改下面的 src），
+              加载成功后会自动替换占位符。未放图时显示占位提示。
+            -->
+            <img id="wechatQr" src="wechat-qr.png?v=0.1.0" alt="dsh-pianist 微信交流群二维码" width="232" height="232">
+            <div class="qr-placeholder" id="wechatQrPlaceholder">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v3M3 11v5a2 2 0 0 0 2 2h1M3 11h3M18 11h3M21 11v5a2 2 0 0 1-2 2h-1M6 18h1M11 8v8M14 8v3M17 8v5M8 11h.01"/></svg>
+              <p>微信交流群二维码<br>即将上线</p>
+            </div>
+          </div>
+          <p class="qr-caption">微信扫码 · 交流与反馈</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand display"><span class="dot"></span>dsh-pianist</div>
+      <div class="footer-links">
+        <a href="https://github.com/Laplace-bit/dsh-pianist" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/Laplace-bit/dsh-pianist/blob/main/README.md" target="_blank" rel="noopener">README</a>
+        <a href="https://github.com/Laplace-bit/dsh-pianist/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        <a href="demo-immersive.html" target="_blank" rel="noopener">Fullscreen Demo</a>
+        <a href="#community">微信交流群</a>
+      </div>
+    </div>
+    <p class="footer-note">© 2026 dsh-pianist contributors · A piano performance plugin for the DeepSeek Harness ecosystem.</p>
+  </footer>
+
+  <script type="module">
+    /* Resolve the demo bundle across site layouts: GitHub Pages serves this
+       page as a project directory (/dsh-pianist/, bundle beside it), while a
+       local root preview serves /docs/index.html (bundle beside docs/). A
+       static '../dist/demo.js' import escapes the project prefix on Pages,
+       so try both candidates dynamically. */
+    let registerDshPianoView = null;
+    let createSalamanderSamplePack = null;
+    const bundleSpecs = location.pathname.includes('/docs/')
+      ? ['../dist/demo.js', './dist/demo.js']
+      : ['./dist/demo.js', '../dist/demo.js'];
+    for (const spec of bundleSpecs) {
+      try {
+        ({ registerDshPianoView, createSalamanderSamplePack } = await import(spec));
+        break;
+      } catch { /* try the next layout */ }
+    }
+
+    /* ---- Scroll reveal, wired FIRST. Text is visible by default; JS adds
+           the hidden `reveal-pending` state only while it is running, so a
+           missing component bundle or a stalled observer never blanks the
+           page. ---- */
+    const reveals = [...document.querySelectorAll('.reveal')];
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) { entry.target.classList.add('is-in'); io.unobserve(entry.target); }
+        }
+      }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+      for (const el of reveals) el.classList.add('reveal-pending');
+      requestAnimationFrame(() => {
+        for (const el of reveals) {
+          if (el.getBoundingClientRect().top < window.innerHeight * 0.9) el.classList.add('is-in');
+        }
+      });
+      for (const el of reveals) io.observe(el);
+      // Failsafe: reveal anything the observer has not reached shortly after
+      // load, so a stalled observer or hidden tab never leaves the page empty.
+      window.setTimeout(() => {
+        for (const el of reveals) {
+          if (el.classList.contains('reveal-pending') && !el.classList.contains('is-in')) el.classList.add('is-in');
+        }
+      }, 3500);
+    }
+
+    /* ---- Live piano stage. Any failure here must not blank the page:
+           text, FAQ, nav and the reveal system all render without it. ---- */
+    const QING_HUA_CI = {"id":"qing-hua-ci-demo","title":"青花瓷（选段）","ppq":960,"tempoMap":[{"tick":"0","bpm":88}],"timeSignatureMap":[{"tick":"0","numerator":4,"denominator":4}],"tracks":[{"id":"left-hand","channel":0,"instrument":{"id":"acoustic-grand-piano","name":"Acoustic Grand Piano"},"voices":[{"id":"left-voice","events":[{"id":"note-3","type":"note","midi":48,"startTick":"3840","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-4","type":"note","midi":55,"startTick":"4320","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-5","type":"note","midi":60,"startTick":"4800","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-6","type":"note","midi":62,"startTick":"5280","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-7","type":"note","midi":64,"startTick":"5760","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-8","type":"note","midi":67,"startTick":"6720","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-15","type":"note","midi":48,"startTick":"7680","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-16","type":"note","midi":55,"startTick":"8160","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-17","type":"note","midi":60,"startTick":"8640","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-18","type":"note","midi":62,"startTick":"9120","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-19","type":"note","midi":64,"startTick":"9600","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-20","type":"note","midi":67,"startTick":"10560","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-27","type":"note","midi":45,"startTick":"11520","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-28","type":"note","midi":52,"startTick":"12000","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-29","type":"note","midi":57,"startTick":"12480","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-30","type":"note","midi":59,"startTick":"12960","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-31","type":"note","midi":60,"startTick":"13440","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-32","type":"note","midi":64,"startTick":"14400","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-39","type":"note","midi":45,"startTick":"15360","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-40","type":"note","midi":52,"startTick":"15840","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-41","type":"note","midi":57,"startTick":"16320","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-42","type":"note","midi":59,"startTick":"16800","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-43","type":"note","midi":60,"startTick":"17280","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-44","type":"note","midi":64,"startTick":"18240","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-51","type":"note","midi":41,"startTick":"19200","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-52","type":"note","midi":48,"startTick":"19680","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-53","type":"note","midi":53,"startTick":"20160","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-54","type":"note","midi":55,"startTick":"20640","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-55","type":"note","midi":57,"startTick":"21120","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-56","type":"note","midi":60,"startTick":"22080","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-63","type":"note","midi":41,"startTick":"23040","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-64","type":"note","midi":48,"startTick":"23520","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-65","type":"note","midi":53,"startTick":"24000","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-66","type":"note","midi":55,"startTick":"24480","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-67","type":"note","midi":57,"startTick":"24960","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-68","type":"note","midi":60,"startTick":"25920","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-75","type":"note","midi":43,"startTick":"26880","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-76","type":"note","midi":50,"startTick":"27360","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-77","type":"note","midi":53,"startTick":"27840","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-78","type":"note","midi":55,"startTick":"28320","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-79","type":"note","midi":62,"startTick":"28800","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-80","type":"note","midi":65,"startTick":"29760","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-88","type":"note","midi":43,"startTick":"30720","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-89","type":"note","midi":50,"startTick":"31200","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-90","type":"note","midi":55,"startTick":"31680","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-91","type":"note","midi":57,"startTick":"32160","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-92","type":"note","midi":59,"startTick":"32640","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-93","type":"note","midi":62,"startTick":"33600","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-98","type":"note","midi":48,"startTick":"34560","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-99","type":"note","midi":55,"startTick":"35040","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-100","type":"note","midi":60,"startTick":"35520","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-101","type":"note","midi":62,"startTick":"36000","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-102","type":"note","midi":64,"startTick":"36480","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-103","type":"note","midi":67,"startTick":"37440","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-110","type":"note","midi":48,"startTick":"38400","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-111","type":"note","midi":55,"startTick":"38880","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-112","type":"note","midi":60,"startTick":"39360","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-113","type":"note","midi":62,"startTick":"39840","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-114","type":"note","midi":64,"startTick":"40320","durationTicks":"1920","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-121","type":"note","midi":40,"startTick":"42240","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-122","type":"note","midi":47,"startTick":"42720","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-123","type":"note","midi":50,"startTick":"43200","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-124","type":"note","midi":52,"startTick":"43680","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-125","type":"note","midi":55,"startTick":"44160","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-126","type":"note","midi":59,"startTick":"45120","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-133","type":"note","midi":45,"startTick":"46080","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-134","type":"note","midi":52,"startTick":"46560","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-135","type":"note","midi":57,"startTick":"47040","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-136","type":"note","midi":59,"startTick":"47520","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-137","type":"note","midi":60,"startTick":"48000","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-138","type":"note","midi":64,"startTick":"48960","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-145","type":"note","midi":41,"startTick":"49920","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-146","type":"note","midi":48,"startTick":"50400","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-147","type":"note","midi":53,"startTick":"50880","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-148","type":"note","midi":55,"startTick":"51360","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-149","type":"note","midi":57,"startTick":"51840","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-150","type":"note","midi":60,"startTick":"52800","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-158","type":"note","midi":43,"startTick":"53760","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-159","type":"note","midi":50,"startTick":"54240","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-160","type":"note","midi":53,"startTick":"54720","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-161","type":"note","midi":55,"startTick":"55200","durationTicks":"480","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-162","type":"note","midi":62,"startTick":"55680","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"},{"id":"note-163","type":"note","midi":65,"startTick":"56640","durationTicks":"960","velocity":0.8,"voiceId":"left-voice","trackId":"left-hand"}]}]},{"id":"right-hand","channel":1,"instrument":{"id":"acoustic-grand-piano","name":"Acoustic Grand Piano"},"voices":[{"id":"right-voice","events":[{"id":"note-0","type":"note","midi":74,"startTick":"2400","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-1","type":"note","midi":72,"startTick":"2880","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-2","type":"note","midi":69,"startTick":"3360","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-9","type":"note","midi":72,"startTick":"3840","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-10","type":"note","midi":72,"startTick":"4800","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-11","type":"note","midi":69,"startTick":"5280","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-12","type":"note","midi":72,"startTick":"5760","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-13","type":"note","midi":72,"startTick":"6720","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-14","type":"note","midi":69,"startTick":"7200","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-21","type":"note","midi":72,"startTick":"7680","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-22","type":"note","midi":69,"startTick":"8160","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-23","type":"note","midi":67,"startTick":"8640","durationTicks":"1440","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-24","type":"note","midi":74,"startTick":"10080","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-25","type":"note","midi":72,"startTick":"10560","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-26","type":"note","midi":69,"startTick":"11040","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-33","type":"note","midi":72,"startTick":"11520","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-34","type":"note","midi":72,"startTick":"12480","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-35","type":"note","midi":69,"startTick":"12960","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-36","type":"note","midi":72,"startTick":"13440","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-37","type":"note","midi":72,"startTick":"14400","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-38","type":"note","midi":76,"startTick":"14880","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-45","type":"note","midi":74,"startTick":"15360","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-46","type":"note","midi":72,"startTick":"15840","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-47","type":"note","midi":72,"startTick":"16320","durationTicks":"1440","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-48","type":"note","midi":67,"startTick":"17760","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-49","type":"note","midi":69,"startTick":"18240","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-50","type":"note","midi":76,"startTick":"18720","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-57","type":"note","midi":76,"startTick":"19200","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-58","type":"note","midi":76,"startTick":"20160","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-59","type":"note","midi":74,"startTick":"20640","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-60","type":"note","midi":76,"startTick":"21120","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-61","type":"note","midi":76,"startTick":"22080","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-62","type":"note","midi":74,"startTick":"22560","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-69","type":"note","midi":76,"startTick":"23040","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-70","type":"note","midi":79,"startTick":"23520","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-71","type":"note","midi":76,"startTick":"24480","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-72","type":"note","midi":76,"startTick":"25440","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-73","type":"note","midi":76,"startTick":"25920","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-74","type":"note","midi":76,"startTick":"26400","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-81","type":"note","midi":76,"startTick":"26880","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-82","type":"note","midi":74,"startTick":"27360","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-83","type":"note","midi":74,"startTick":"27840","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-84","type":"note","midi":74,"startTick":"28320","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-85","type":"note","midi":74,"startTick":"28800","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-86","type":"note","midi":72,"startTick":"29760","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-87","type":"note","midi":76,"startTick":"30240","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-94","type":"note","midi":74,"startTick":"31200","durationTicks":"1920","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-95","type":"note","midi":74,"startTick":"33120","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-96","type":"note","midi":72,"startTick":"33600","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-97","type":"note","midi":69,"startTick":"34080","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-104","type":"note","midi":72,"startTick":"34560","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-105","type":"note","midi":72,"startTick":"35520","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-106","type":"note","midi":69,"startTick":"36000","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-107","type":"note","midi":72,"startTick":"36480","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-108","type":"note","midi":72,"startTick":"37440","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-109","type":"note","midi":69,"startTick":"37920","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-115","type":"note","midi":72,"startTick":"38400","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-116","type":"note","midi":69,"startTick":"38880","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-117","type":"note","midi":67,"startTick":"39360","durationTicks":"1440","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-118","type":"note","midi":69,"startTick":"40800","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-119","type":"note","midi":71,"startTick":"41280","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-120","type":"note","midi":76,"startTick":"41760","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-127","type":"note","midi":79,"startTick":"42240","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-128","type":"note","midi":79,"startTick":"43200","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-129","type":"note","midi":74,"startTick":"43680","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-130","type":"note","midi":79,"startTick":"44160","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-131","type":"note","midi":79,"startTick":"45120","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-132","type":"note","midi":74,"startTick":"45600","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-139","type":"note","midi":74,"startTick":"46080","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-140","type":"note","midi":72,"startTick":"46560","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-141","type":"note","midi":72,"startTick":"47040","durationTicks":"1440","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-142","type":"note","midi":74,"startTick":"48480","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-143","type":"note","midi":72,"startTick":"48960","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-144","type":"note","midi":74,"startTick":"49440","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-151","type":"note","midi":76,"startTick":"49920","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-152","type":"note","midi":74,"startTick":"50400","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-153","type":"note","midi":74,"startTick":"50880","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-154","type":"note","midi":72,"startTick":"51360","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-155","type":"note","midi":74,"startTick":"51840","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-156","type":"note","midi":72,"startTick":"52800","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-157","type":"note","midi":69,"startTick":"53280","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-164","type":"note","midi":76,"startTick":"53760","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-165","type":"note","midi":74,"startTick":"54240","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-166","type":"note","midi":72,"startTick":"54720","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-167","type":"note","midi":69,"startTick":"55200","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-168","type":"note","midi":72,"startTick":"55680","durationTicks":"960","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-169","type":"note","midi":72,"startTick":"56640","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"},{"id":"note-170","type":"note","midi":72,"startTick":"57120","durationTicks":"480","velocity":0.8,"voiceId":"right-voice","trackId":"right-hand"}]}]}],"metadata":{"source":"DeepSeek Harness piano_perform tool"}};
+    // 字符串 tick 转 bigint（setScore 需要 bigint）。
+    (function toBigTicks(node) {
+      for (const key in node) {
+        if ((key === "tick" || key === "startTick" || key === "durationTicks" || key === "endTick") && typeof node[key] === "string") node[key] = BigInt(node[key]);
+        else if (node[key] && typeof node[key] === "object") toBigTicks(node[key]);
+      }
+      return node;
+    })(QING_HUA_CI);
+
+    try {
+      if (registerDshPianoView === null) throw new Error('demo bundle not found');
+      registerDshPianoView();
+
+      const hero = document.querySelector('#piano');
+      hero.setScore(QING_HUA_CI);
+      hero.setPianistSettings({
+        enabled: true,
+        renderMode: 'embedded',
+        skin: 'lacquer-gold',
+        showWaterfall: false,
+        events: { particles: true },
+        visualQuality: 'high',
+      });
+      hero.setSamplePack(createSalamanderSamplePack((pkg, file) =>
+        `https://cdn.jsdelivr.net/npm/${pkg}@1.0.5/audio/${encodeURIComponent(file)}`));
+
+      // Skin-stage cards stay idle but alive.
+      for (const el of document.querySelectorAll('[data-skin-stage]')) {
+        el.setScore(QING_HUA_CI);
+        el.setPianistSettings({
+          enabled: true,
+          renderMode: 'embedded',
+          skin: el.dataset.skinStage,
+          showWaterfall: false,
+          events: { particles: false },
+          visualQuality: 'high',
+        });
+        el.setSamplePack(createSalamanderSamplePack((pkg, file) =>
+          `https://cdn.jsdelivr.net/npm/${pkg}@1.0.5/audio/${encodeURIComponent(file)}`));
+      }
+
+      /* ---- Skin switching on the hero stage ---- */
+      const tabs = document.querySelectorAll('.stage-tab');
+      for (const tab of tabs) {
+        tab.addEventListener('click', () => {
+          for (const t of tabs) t.setAttribute('aria-pressed', String(t === tab));
+          hero.setPianistSettings({ skin: tab.dataset.skin });
+        });
+      }
+
+      /* ---- Transport ---- */
+      const playBtn = document.querySelector('#playBtn');
+      const stopBtn = document.querySelector('#stopBtn');
+      const playIcon = document.querySelector('#playIcon');
+      const pauseIcon = document.querySelector('#pauseIcon');
+      const seek = document.querySelector('#seek');
+      const timeCurrent = document.querySelector('#timeCurrent');
+      const timeTotal = document.querySelector('#timeTotal');
+      const rate = document.querySelector('#rate');
+      const fullscreenBtn = document.querySelector('#fullscreenBtn');
+
+      const fmt = (s) => {
+        const m = Math.floor(s / 60);
+        const r = Math.floor(s % 60);
+        return `${m}:${String(r).padStart(2, '0')}`;
+      };
+      const setSeek = () => {
+        const duration = hero.duration;
+        const max = Math.round((duration || 0) * 10);
+        if (seek.max !== String(max)) seek.max = String(max);
+        timeTotal.textContent = fmt(duration);
+        if (duration > 0) {
+          const seconds = Math.min(hero.currentTime, duration);
+          const pct = (seconds / duration) * 100;
+          seek.style.setProperty('--seek-progress', `${pct.toFixed(1)}%`);
+          timeCurrent.textContent = fmt(seconds);
+          if (!seeking) seek.value = String(Math.round(seconds * 10));
+        }
+      };
+      const setPlayState = (playing) => {
+        playIcon.hidden = playing;
+        pauseIcon.hidden = !playing;
+        playBtn.setAttribute('aria-label', playing ? '暂停' : '播放');
+      };
+
+      timeTotal.textContent = fmt(hero.duration);
+      seek.max = String(Math.round((hero.duration || 0) * 10));
+      let seeking = false;
+      seek.addEventListener('pointerdown', () => { seeking = true; });
+      seek.addEventListener('pointerup', () => { seeking = false; });
+      seek.addEventListener('keyup', () => { seeking = false; });
+      seek.addEventListener('input', () => {
+        const seconds = Number(seek.value) / 10;
+        hero.seek(seconds);
+        timeCurrent.textContent = fmt(seconds);
+        const pct = hero.duration ? (seconds / hero.duration) * 100 : 0;
+        seek.style.setProperty('--seek-progress', `${pct.toFixed(1)}%`);
+      });
+      playBtn.addEventListener('click', async () => {
+        try {
+          if (hero.playbackState === 'playing') { hero.pause(); setPlayState(false); }
+          else { await hero.play(); setPlayState(true); }
+        } catch (e) {
+          playBtn.setAttribute('aria-label', '无法播放，请点击页面后重试');
+        }
+      });
+      stopBtn.addEventListener('click', () => { hero.stop(); setPlayState(false); });
+      rate.addEventListener('change', () => { hero.setRate(Number(rate.value)); });
+      fullscreenBtn.addEventListener('click', async () => {
+        try { await hero.toggleFullscreen(); } catch (e) { /* fullscreen may be restricted */ }
+      });
+      hero.addEventListener('pianist-audio-error', () => setPlayState(false));
+      setInterval(setSeek, 100);
+    } catch (error) {
+      console.warn('dsh-pianist stage unavailable', error);
+    }
+
+    /* ---- Smooth-scroll CTA / nav ---- */
+    document.querySelectorAll('[data-scroll]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const target = document.querySelector(el.dataset.scroll);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    /* ---- FAQ accordion ---- */
+    for (const item of document.querySelectorAll('.faq-item')) {
+      const q = item.querySelector('.faq-q');
+      q.addEventListener('click', () => {
+        const open = item.classList.toggle('open');
+        q.setAttribute('aria-expanded', String(open));
+      });
+    }
+
+    /* ---- WeChat group QR: swap the placeholder for the real image when present ---- */
+    const wechatQr = document.querySelector('#wechatQr');
+    const qrPlaceholder = document.querySelector('#wechatQrPlaceholder');
+    if (wechatQr && qrPlaceholder) {
+      const showQr = () => { wechatQr.classList.add('is-loaded'); qrPlaceholder.hidden = true; };
+      const tryShowQr = () => { if (wechatQr.complete && wechatQr.naturalWidth > 0) showQr(); };
+      wechatQr.addEventListener('load', showQr);
+      wechatQr.addEventListener('error', () => wechatQr.remove());
+      tryShowQr();
+      // The image may finish between the parse and this script; re-check on a
+      // couple of ticks so the real QR always replaces the placeholder.
+      window.setTimeout(tryShowQr, 300);
+      window.setTimeout(tryShowQr, 1200);
+    }
+
+    /* ---- Showreel video: ready when a source is present ---- */
+    const reelVideo = document.querySelector('#reelVideo');
+    const reelPoster = document.querySelector('#reelPoster');
+    const reelPlay = document.querySelector('#reelPlay');
+    const reelHasSource = () => Boolean(reelVideo && reelVideo.querySelector('source')?.getAttribute('src'));
+    if (reelHasSource()) {
+      const reelLabel = document.querySelector('#reelLabel');
+      const reelSub = document.querySelector('#reelSub');
+      if (reelLabel) reelLabel.textContent = 'Showreel · 点击播放';
+      if (reelSub) reelSub.textContent = '短片已就绪，点击播放';
+      reelPlay.addEventListener('click', async () => {
+        try { await reelVideo.play(); reelPoster.classList.add('is-live'); } catch (e) { /* muted autoplay gate */ }
+      });
+    }
+  </script>
+</body>
+</html>

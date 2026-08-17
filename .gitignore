@@ -1,0 +1,18 @@
+.npm-cache
+.pnpm-store/
+/node_modules
+/dist/
+
+# Transient config bundles created by Vite/Vitest.
+*.timestamp-*
+
+# Temporary files left by workspace tooling.
+/_tmp_*
+
+# Local editor/agent configuration (preview servers, personal settings).
+/.claude/
+
+# macOS Finder metadata.
+.DS_Store
+
+

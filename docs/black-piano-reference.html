@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08090b">
+    <title>钢琴皮肤视角预览</title>
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; background: #08090b; }
+      dsh-piano-view { display: block; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <dsh-piano-view id="piano"></dsh-piano-view>
+    <script type="module">
+      /* Same dual-layout resolution as docs/index.html: GitHub Pages serves
+         this page as a project directory, local preview serves /docs/. */
+      let registerDshPianoView = null;
+      const bundleSpecs = location.pathname.includes('/docs/')
+        ? ['../dist/demo.js', './dist/demo.js']
+        : ['./dist/demo.js', '../dist/demo.js'];
+      for (const spec of bundleSpecs) {
+        try { ({ registerDshPianoView } = await import(spec)); break; }
+        catch { /* try the next layout */ }
+      }
+
+      registerDshPianoView();
+      const piano = document.querySelector('#piano');
+      const requestedSkin = new URLSearchParams(location.search).get('skin');
+      const skin = requestedSkin === 'seaside-glass' ? requestedSkin : 'lacquer-gold';
+      piano.setPianistSettings({
+        enabled: true,
+        renderMode: 'immersive',
+        skin,
+        showWaterfall: false,
+        events: { particles: false },
+        visualQuality: 'high',
+      });
+      piano.setScore({
+        id: `${skin}-reference`,
+        title: skin === 'seaside-glass' ? '樱花珍珠钢琴' : '曜黑鎏金钢琴',
+        ppq: 960,
+        tempoMap: [{ tick: 0n, bpm: 100 }],
+        timeSignatureMap: [{ tick: 0n, numerator: 4, denominator: 4 }],
+        tracks: [{
+          id: 'piano',
+          instrument: { id: 'grand' },
+          voices: [{ id: 'right', events: [] }],
+        }],
+      });
+      piano.requestImmersive();
+    </script>
+  </body>
+</html>

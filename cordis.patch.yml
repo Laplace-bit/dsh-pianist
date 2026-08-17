@@ -1,0 +1,4 @@
+# Applied when dsh-pianist is present in dsh.profile.bundles.
+- insert:
+    - id: pianist
+      name: dsh-pianist
