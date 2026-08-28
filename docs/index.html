@@ -367,30 +367,6 @@
     .faq-item.open .faq-a { max-height: 320px; }
     .faq-a p { margin: 0; padding: 0 26px 24px; color: var(--text-muted); font-size: 15px; line-height: 1.7; }
 
-    /* -------- Community / WeChat QR -------- */
-    .qr-bezel {
-      width: max-content; max-width: 100%; margin: 0 auto; padding: 12px; border-radius: calc(var(--radius-xl) + 8px);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-      border: 1px solid var(--hairline);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-    .qr-core {
-      position: relative; width: 232px; height: 232px; overflow: hidden; border-radius: var(--radius-lg);
-      background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.92);
-    }
-    .qr-core img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 600ms var(--ease); }
-    .qr-core img.is-loaded { opacity: 1; }
-    .qr-placeholder {
-      position: absolute; inset: 0; display: grid; place-items: center; gap: 12px; padding: 16px;
-      background: linear-gradient(150deg, #101014, #17171c); color: var(--text-muted); text-align: center;
-    }
-    /* display:grid above overrides the UA rule for [hidden]; restore it so the
-       swap-to-QR script can actually hide the placeholder. */
-    .qr-placeholder[hidden] { display: none; }
-    .qr-placeholder svg { color: var(--gold); opacity: 0.85; }
-    .qr-placeholder p { margin: 0; font-size: 13px; line-height: 1.5; }
-    .qr-caption { margin: 16px 0 0; color: var(--text-muted); font-size: 13px; letter-spacing: 0.04em; text-align: center; }
-
     /* -------- Footer -------- */
     footer { position: relative; z-index: 1; padding: 70px clamp(20px, 5vw, 64px) 90px; border-top: 1px solid var(--hairline-soft); }
     .footer-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; justify-content: space-between; }
@@ -442,7 +418,6 @@
       <a class="nav-link" href="#skins">Skins</a>
       <a class="nav-link" href="#builders">安装</a>
       <a class="nav-link" href="#reel">Film</a>
-      <a class="nav-link" href="#community">交流</a>
       <a class="nav-link" href="#faq">FAQ</a>
     </div>
     <a class="nav-cta" href="https://github.com/Laplace-bit/dsh-pianist" target="_blank" rel="noopener">GitHub
@@ -687,29 +662,6 @@
       </div>
     </section>
 
-    <!-- COMMUNITY / WECHAT GROUP -->
-    <section id="community" aria-labelledby="community-title" style="background:linear-gradient(180deg, transparent, rgba(255,255,255,0.02))">
-      <div class="shell">
-        <div class="section-head reveal" style="margin-inline:auto;text-align:center">
-          <h2 id="community-title" class="display">一起聊聊，<span class="gold">弹过的曲子</span></h2>
-          <p class="lede" style="margin-inline:auto">交流用法、反馈问题，把模型弹的曲子发进来。扫码加入微信交流群。</p>
-        </div>
-        <div class="qr-bezel reveal" style="--d:100ms">
-          <div class="qr-core">
-            <!--
-              微信群二维码：把图片放到 docs/wechat-qr.png（或改下面的 src），
-              加载成功后会自动替换占位符。未放图时显示占位提示。
-            -->
-            <img id="wechatQr" src="wechat-qr.png?v=0.1.0" alt="dsh-pianist 微信交流群二维码" width="232" height="232">
-            <div class="qr-placeholder" id="wechatQrPlaceholder">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v3M3 11v5a2 2 0 0 0 2 2h1M3 11h3M18 11h3M21 11v5a2 2 0 0 1-2 2h-1M6 18h1M11 8v8M14 8v3M17 8v5M8 11h.01"/></svg>
-              <p>微信交流群二维码<br>即将上线</p>
-            </div>
-          </div>
-          <p class="qr-caption">微信扫码 · 交流与反馈</p>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer>
@@ -720,7 +672,6 @@
         <a href="https://github.com/Laplace-bit/dsh-pianist/blob/main/README.md" target="_blank" rel="noopener">README</a>
         <a href="https://github.com/Laplace-bit/dsh-pianist/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
         <a href="demo-immersive.html" target="_blank" rel="noopener">Fullscreen Demo</a>
-        <a href="#community">微信交流群</a>
       </div>
     </div>
     <p class="footer-note">© 2026 dsh-pianist contributors · A piano performance plugin for the DeepSeek Harness ecosystem.</p>
@@ -907,21 +858,6 @@
         const open = item.classList.toggle('open');
         q.setAttribute('aria-expanded', String(open));
       });
-    }
-
-    /* ---- WeChat group QR: swap the placeholder for the real image when present ---- */
-    const wechatQr = document.querySelector('#wechatQr');
-    const qrPlaceholder = document.querySelector('#wechatQrPlaceholder');
-    if (wechatQr && qrPlaceholder) {
-      const showQr = () => { wechatQr.classList.add('is-loaded'); qrPlaceholder.hidden = true; };
-      const tryShowQr = () => { if (wechatQr.complete && wechatQr.naturalWidth > 0) showQr(); };
-      wechatQr.addEventListener('load', showQr);
-      wechatQr.addEventListener('error', () => wechatQr.remove());
-      tryShowQr();
-      // The image may finish between the parse and this script; re-check on a
-      // couple of ticks so the real QR always replaces the placeholder.
-      window.setTimeout(tryShowQr, 300);
-      window.setTimeout(tryShowQr, 1200);
     }
 
     /* ---- Showreel video: ready when a source is present ---- */

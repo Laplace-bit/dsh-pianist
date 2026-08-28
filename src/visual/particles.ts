@@ -10,6 +10,19 @@ export interface PianoParticle {
   intensity: number;
 }
 
+/**
+ * One gravity step for a spark impact, in canvas space where y grows
+ * downward: `g` is the downward acceleration in px/s², so an upward-launched
+ * spark (negative vy) decelerates, arcs over, and falls back toward the
+ * keyboard. Horizontal velocity is untouched.
+ */
+export function applySparkGravity(
+  spark: { vx?: number; vy?: number; g?: number },
+  deltaSeconds: number,
+): void {
+  spark.vy = (spark.vy ?? 0) + (spark.g ?? 0) * deltaSeconds;
+}
+
 function hashSeed(value: string): number {
   let hash = 2_166_136_261;
   for (let index = 0; index < value.length; index += 1) {

@@ -124,7 +124,10 @@ describe('KeyboardLayout', () => {
   });
 
   it('returns deterministic normalized x positions', () => {
-    expect(noteXPosition(60)).toBeCloseTo(23 / 52, 10);
+    // Centers, in white-key widths: C4 owns the 24th white unit; C#4 sits on
+    // the C/D boundary with the shared real-piano lean of -0.1.
+    expect(noteXPosition(60)).toBeCloseTo(23.5 / 52, 10);
+    expect(noteXPosition(61)).toBeCloseTo(23.9 / 52, 10);
     expect(noteXPosition(61)).toBeGreaterThan(noteXPosition(60));
     expect(noteXPosition(61)).toBeLessThan(noteXPosition(62));
   });

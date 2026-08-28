@@ -30,9 +30,9 @@ describe('VisualTimeline', () => {
     const timeline = new VisualTimeline(buildTimeline(score()));
 
     expect(timeline.notes.map(note => [note.id, note.startTime, note.endTime, note.x])).toEqual([
-      ['long', 0, 2, 23 / 52],
-      ['middle', 1, 1.25, 25 / 52],
-      ['future', 3, 3.25, 27 / 52],
+      ['long', 0, 2, 23.5 / 52],
+      ['middle', 1, 1.25, 25.5 / 52],
+      ['future', 3, 3.25, 27.5 / 52],
     ]);
     expect(Object.isFrozen(timeline.notes)).toBe(true);
     expect(Object.isFrozen(timeline.notes[0])).toBe(true);

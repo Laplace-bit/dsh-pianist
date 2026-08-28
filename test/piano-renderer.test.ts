@@ -79,7 +79,7 @@ describe('PianoRenderer Canvas fallback', () => {
     // Background plus the note visible eight seconds before its note-on. Low
     // quality deliberately omits glow and particle primitives.
     expect(context.fillRects).toHaveLength(2);
-    expect(context.fillRects[1]).toMatchObject({ x: 225.5, y: 20, width: 9, height: 60 });
+    expect(context.fillRects[1]).toMatchObject({ x: 230.5, y: 20, width: 9, height: 60 });
 
     context.fillRects.length = 0;
     renderer.render({
@@ -94,7 +94,7 @@ describe('PianoRenderer Canvas fallback', () => {
 
     // The primary note is derived directly from the same timeline at its
     // note-on position; medium quality adds deterministic glow/particles.
-    expect(context.fillRects[1]).toMatchObject({ x: 225.5, y: 140, width: 9, height: 60 });
+    expect(context.fillRects[1]).toMatchObject({ x: 230.5, y: 140, width: 9, height: 60 });
     expect(context.fillRects.length).toBeGreaterThan(2);
   });
 });

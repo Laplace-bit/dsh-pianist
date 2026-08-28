@@ -67,12 +67,6 @@ pnpm dsh web
 
 改完保存即生效。
 
-## 社区
-
-交流用法、反馈问题，或者把模型弹的曲子发进来。欢迎扫码加入微信交流群。
-
-![微信交流群二维码](./docs/wechat-qr.png)
-
 ## 许可证
 
 插件代码 MIT。内置钢琴录音来自 Salamander Grand Piano V3（CC BY 3.0），署名见 [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)。

@@ -47,6 +47,13 @@ class FakeAudioParam {
     this.calls.push({ method: 'cancel', when });
     return this;
   }
+
+  cancelAndHoldAtTime(when: number): this {
+    // Real engines pin the computed curve value here; the fake keeps the
+    // current value, which tests assign explicitly to simulate mid-fade.
+    this.calls.push({ method: 'cancel-hold', when });
+    return this;
+  }
 }
 
 class FakeNode {
@@ -420,6 +427,37 @@ describe('SamplePackPianoEngine', () => {
     expect(engine.activeVoiceCount).toBe(0);
   });
 
+  it('anchors a seek during a fade at the faded level instead of jumping back to full gain', async () => {
+    // Regression: stopVoiceImmediately used to anchor the shortened tail at
+    // the sustain level, snapping a mid-release voice back up — an audible
+    // pop whenever playback was seeked or stopped during a fade.
+    const context = new FakeAudioContext();
+    const engine = new SamplePackPianoEngine({
+      samplePack: defaultPack(),
+      releaseSeconds: 0.4,
+      voiceStealReleaseSeconds: 0.01,
+    });
+    await engine.init(context as unknown as BaseAudioContext);
+
+    engine.noteOn('fading', 60, 0.5, 1);
+    const panner = context.panners[0]!;
+    const gain = context.gains.find(candidate => candidate.connections.includes(panner))!;
+    engine.noteOff('fading', 2);
+    gain.gain.value = 0.08; // The computed curve value partway through the fade.
+
+    engine.allNotesOff(2.05);
+    expect(gain.gain.calls).toContainEqual({ method: 'cancel-hold', when: 2.05 });
+    // No re-anchor above what the listener is currently hearing.
+    for (const call of gain.gain.calls.filter(entry => entry.method === 'set')) {
+      expect(call.value ?? 0).toBeLessThanOrEqual(0.081);
+    }
+    // The natural release tail (2.0 + 0.4) plus the shortened steal tail.
+    const tails = gain.gain.calls.filter(call => call.method === 'exponential');
+    expect(tails).toHaveLength(2);
+    expect(tails[1]!.value).toBe(0.0001);
+    expect(tails[1]!.when).toBeCloseTo(2.06, 12);
+  });
+
   it('refuses a requested sample-pack source that has no configured pack', () => {
     expect(() => createPianoEngine({ source: 'sample-pack' })).toThrow(MissingSamplePackError);
   });
@@ -485,6 +523,22 @@ describe('GeneratedPianoEngine duration handling', () => {
 
     engine.setPedal(0, 3);
     expect(context.sources[0]!.stopCalls).toHaveLength(1);
+  });
+
+  it('pins the gain curve at the scheduled note-off instead of a stale current value', async () => {
+    // Regression: scheduling a duration release used to anchor the future
+    // ramp with setValueAtTime(param.value) read before the note even
+    // sounded — a stale anchor that could snap the envelope mid-note.
+    const context = new FakeAudioContext();
+    const engine = new GeneratedPianoEngine({ releaseSeconds: 0.4 });
+    await engine.init(context as unknown as BaseAudioContext);
+
+    engine.noteOn('pinned', 60, 0.6, 5, 2);
+    const gain = context.gains[context.gains.length - 1]!;
+    const releaseStart = gain.gain.calls.find(call => call.when === 7);
+    expect(releaseStart).toMatchObject({ method: 'cancel-hold', when: 7 });
+    expect(gain.gain.calls.filter(call => call.method === 'set' && call.when === 7)).toEqual([]);
+    expect(gain.gain.calls).toContainEqual({ method: 'linear', value: 0.0001, when: 7.4 });
   });
 
   it('loops the bounded generated buffer until a long note is actually released', async () => {

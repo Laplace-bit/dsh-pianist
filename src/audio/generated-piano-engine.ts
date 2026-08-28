@@ -1,3 +1,4 @@
+import { cancelAndHoldAutomation } from './cancel-and-hold.js';
 import { generatePianoTone, midiToFrequency } from './generated-piano.js';
 import type { PianoEngine, PianoEngineOptions } from './types.js';
 
@@ -225,8 +226,7 @@ export class GeneratedPianoEngine implements PianoEngine {
     if (!voice.pendingDurationRelease) {
       return;
     }
-    voice.gain.gain.cancelScheduledValues(when);
-    voice.gain.gain.setValueAtTime(Math.max(0.0001, voice.gain.gain.value), when);
+    cancelAndHoldAutomation(voice.gain.gain, when, 0.0001);
     try {
       voice.source.stop(voice.naturalStopAt);
     } catch {
@@ -247,8 +247,7 @@ export class GeneratedPianoEngine implements PianoEngine {
     }
     voice.releaseScheduled = true;
     voice.pendingDurationRelease = pendingDurationRelease;
-    voice.gain.gain.cancelScheduledValues(when);
-    voice.gain.gain.setValueAtTime(Math.max(0.0001, voice.gain.gain.value), when);
+    cancelAndHoldAutomation(voice.gain.gain, when, 0.0001);
     voice.gain.gain.linearRampToValueAtTime(0.0001, when + release);
     try {
       voice.source.stop(when + release + 0.02);

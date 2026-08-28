@@ -36,7 +36,9 @@ import {
   PIANO_KEYBOARD_HEIGHT,
   PIANO_BLACK_KEY_HEIGHT_RATIO,
   PIANO_BLACK_KEY_WIDTH_RATIO,
+  blackKeyLean,
 } from './keyboard.js';
+import { applySparkGravity } from './particles.js';
 import { resolvePianoSkin, type PianoSkin, type Rgb } from './skin.js';
 
 const WHITE_COUNT = KEYBOARD_LAYOUT.filter(key => !key.isBlack).length;
@@ -375,6 +377,20 @@ export function computeLayout(
 }
 
 /**
+ * Horizontal center of a key, in white-key widths from the left cheek edge.
+ * White keys own one full unit each; black keys sit on the boundary between
+ * their neighbouring whites — `whitesBefore` already counts that left white —
+ * leaned by the shared real-piano offset of blackKeyLean.
+ */
+function keyCenterOffsetUnits(midi: number): number {
+  const whitesBefore = WHITES_BEFORE_BY_MIDI.get(midi);
+  if (whitesBefore === undefined) return WHITE_COUNT / 2;
+  const pitchClass = ((midi % 12) + 12) % 12;
+  const isBlack = pitchClass === 1 || pitchClass === 3 || pitchClass === 6 || pitchClass === 8 || pitchClass === 10;
+  return whitesBefore + (isBlack ? blackKeyLean(pitchClass) : 0.5);
+}
+
+/**
  * Canvas-space center of any key for the current layout. Every note-derived
  * visual (ribbons, flashes, rings, sparks, ripples) MUST route through this
  * so effects land exactly on the sounding key — never on a full-canvas
@@ -382,11 +398,7 @@ export function computeLayout(
  * on wide screens.
  */
 export function keyCenterX(L: PianoLayout, midi: number): number {
-  const whitesBefore = WHITES_BEFORE_BY_MIDI.get(midi);
-  if (whitesBefore === undefined) return L.keyLeft + L.whiteW * WHITE_COUNT / 2;
-  const pitchClass = ((midi % 12) + 12) % 12;
-  const isBlack = pitchClass === 1 || pitchClass === 3 || pitchClass === 6 || pitchClass === 8 || pitchClass === 10;
-  const localX = L.cheek + (whitesBefore + (isBlack ? 0.5 + pitchNudge(pitchClass) : 0.5)) * L.whiteW;
+  const localX = L.cheek + keyCenterOffsetUnits(midi) * L.whiteW;
   const projected = projectKeyboardPoint(L, localX, 0.52);
   return L.x0 + projected.x;
 }
@@ -688,9 +700,7 @@ export class ImmersivePianoScene implements PianoRenderer {
     }
     for (const key of KEYBOARD_LAYOUT) {
       if (!key.isBlack) continue;
-      const whitesBefore = WHITES_BEFORE_BY_MIDI.get(key.midi) ?? 0;
-      const pitchClass = ((key.midi % 12) + 12) % 12;
-      const centerLocal = L.cheek + (whitesBefore + 0.5 + pitchNudge(pitchClass)) * L.whiteW;
+      const centerLocal = L.cheek + keyCenterOffsetUnits(key.midi) * L.whiteW;
       const half = L.blackW / 2;
       const backL = projectKeyboardPoint(L, centerLocal - half, BLACK_KEY_DEPTH_BACK);
       const backR = projectKeyboardPoint(L, centerLocal + half, BLACK_KEY_DEPTH_BACK);
@@ -1044,7 +1054,7 @@ export class ImmersivePianoScene implements PianoRenderer {
       const impact = this.impacts[i]!;
       const impactDelta = impact.wallT0 === undefined ? dt : this.wallDelta;
       if (impact.kind === 'spark' && impact.life !== undefined) {
-        impact.vx = (impact.vx ?? 0) + (impact.g ?? 0) * impactDelta;
+        applySparkGravity(impact, impactDelta);
         impact.x += (impact.vx ?? 0) * impactDelta;
         impact.y += (impact.vy ?? 0) * impactDelta;
       }
@@ -1091,7 +1101,7 @@ export class ImmersivePianoScene implements PianoRenderer {
       const speed = 24 + random() * 58 * v;
       this.impacts.push({
         kind: 'spark', x, y: L.keyTop + 2,
-        vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, g: -7,
+        vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, g: 7, // px/s² downward in canvas space
         t0: now, wallT0: manual ? this.wallSeconds : undefined, v, hue,
         life: 0.9 + random() * 0.8, r: 1.1 + random() * 1.8,
       });
@@ -1795,9 +1805,7 @@ export class ImmersivePianoScene implements PianoRenderer {
     }
     for (const key of KEYBOARD_LAYOUT) {
       if (!key.isBlack) continue;
-      const whitesBefore = WHITES_BEFORE_BY_MIDI.get(key.midi) ?? 0;
-      const pitchClass = ((key.midi % 12) + 12) % 12;
-      const centerLocal = L.cheek + (whitesBefore + 0.5 + pitchNudge(pitchClass)) * L.whiteW;
+      const centerLocal = L.cheek + keyCenterOffsetUnits(key.midi) * L.whiteW;
       const half = L.blackW / 2;
       const anim = this.pressed.get(key.midi) ?? 0;
       const off = anim * travelBlack;
@@ -2256,10 +2264,6 @@ export class ImmersivePianoScene implements PianoRenderer {
   }
 
   /* ------------------------------ helpers ------------------------------ */
-}
-
-function pitchNudge(pitchClass: number): number {
-  return { 1: -0.1, 3: 0.1, 6: -0.13, 8: 0, 10: 0.13 }[pitchClass] ?? 0;
 }
 
 /** Ivory / ebony key sprites with rounded corners, shading, gloss — and the black-key drop shadow baked in. */

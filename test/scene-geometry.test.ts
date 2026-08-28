@@ -32,32 +32,41 @@ describe('note effect coordinates', () => {
     });
   }
 
-  it('keeps pitch order monotonic across the keyboard on a wide fullscreen', () => {
+  it('keeps pitch order strictly monotonic across the keyboard on a wide fullscreen', () => {
     // Regression: effects used full-canvas normalization, so low notes
     // clustered at the far left edge while the instrument sat centered.
-    // Black keys carry a deliberate ±0.13-key stylistic lean, so compare
-    // with that tolerance rather than strict ordering.
+    // The corrected layout leaves every key center strictly right of its
+    // lower neighbor — even with the real-piano ebony lean, whose ±0.13-key
+    // offset never closes the gap to the adjacent white center.
     const L = computeLayout(2560, 1440, false);
-    const tolerance = L.whiteW * 0.16;
     let previous = Number.NEGATIVE_INFINITY;
     for (let midi = MIN_PIANO_MIDI; midi <= MAX_PIANO_MIDI; midi += 1) {
       const x = keyCenterX(L, midi);
-      expect(x).toBeGreaterThanOrEqual(previous - tolerance);
+      expect(x).toBeGreaterThan(previous);
       previous = x;
     }
     expect(keyCenterX(L, MIN_PIANO_MIDI)).toBeGreaterThan(L.keyLeft);
     expect(keyCenterX(L, MAX_PIANO_MIDI)).toBeLessThan(keyboardSpan(L).right);
   });
 
-  it('places black keys inside the gap between their neighbouring whites', () => {
+  it('places black keys at their real-piano offset from the neighbouring-white boundary', () => {
+    // Regression: black keys were anchored a half white-key too far right —
+    // the formula stacked a white-center half unit on top of an offset that
+    // is already measured from the boundary, pushing every ebony key onto
+    // its right-hand white. The lean table below mirrors pitchNudge and is
+    // asserted exactly against the midpoint between the neighbour centers.
+    const NUDGES: Record<number, number> = { 1: -0.1, 3: 0.1, 6: -0.13, 8: 0, 10: 0.13 };
     const L = computeLayout(1280, 720, false);
     for (let midi = MIN_PIANO_MIDI + 1; midi < MAX_PIANO_MIDI; midi += 1) {
       if (!isBlackKey(midi)) continue;
-      const blackX = keyCenterX(L, midi);
       const beforeWhite = keyCenterX(L, midi - 1);
       const afterWhite = keyCenterX(L, midi + 1);
-      expect(blackX).toBeGreaterThan(beforeWhite);
-      expect(blackX).toBeLessThan(afterWhite + L.whiteW * 0.16);
+      const gapMid = (beforeWhite + afterWhite) / 2;
+      // Neighbor centers are one projected white-key width apart.
+      const whiteWProjected = afterWhite - beforeWhite;
+      expect(whiteWProjected).toBeGreaterThan(0);
+      const nudge = NUDGES[((midi % 12) + 12) % 12]!;
+      expect(keyCenterX(L, midi) - gapMid).toBeCloseTo(nudge * whiteWProjected, 6);
     }
   });
 
@@ -70,13 +79,12 @@ describe('note effect coordinates', () => {
       expect(L.keyboardSkewX).toBe(0);
       expect(L.keyboardBackInset).toBeGreaterThan(L.keyboardFrontInset);
       expect(L.keyboardFrontDrop).toBeLessThan(L.whiteH * 0.2);
-      // Mid-plane key centers stay ordered within the deliberate ±0.13-key
-      // stylistic lean of the ebony rows.
-      const tolerance = L.whiteW * 0.16;
+      // Mid-plane key centers stay strictly ordered; the deliberate ±0.13-key
+      // ebony lean of the black rows never breaks the pitch ordering.
       let previous = Number.NEGATIVE_INFINITY;
       for (let midi = MIN_PIANO_MIDI; midi <= MAX_PIANO_MIDI; midi += 1) {
         const x = keyCenterX(L, midi);
-        expect(x).toBeGreaterThanOrEqual(previous - tolerance);
+        expect(x).toBeGreaterThan(previous);
         previous = x;
       }
     }

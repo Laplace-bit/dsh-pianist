@@ -50,6 +50,29 @@ export const KEYBOARD_LAYOUT = createKeyboardLayout();
 const WHITE_KEYS = KEYBOARD_LAYOUT.filter((key) => !key.isBlack);
 const BLACK_KEYS = KEYBOARD_LAYOUT.filter((key) => key.isBlack);
 
+/**
+ * Real-piano ebony placement, in white-key widths from the white-key boundary
+ * each black key lives on: C#/F# lean toward their flat side, D#/A# toward
+ * their sharp side, G# stays centered. Single source shared by every
+ * pitch→x mapping.
+ */
+const BLACK_KEY_LEAN: Readonly<Record<number, number>> = { 1: -0.1, 3: 0.1, 6: -0.13, 8: 0, 10: 0.13 };
+
+export function blackKeyLean(pitchClass: number): number {
+  return BLACK_KEY_LEAN[pitchClass] ?? 0;
+}
+
+/** White-key-width offset of each key's center from the keyboard's left edge. */
+const KEY_CENTER_OFFSET_UNITS = new Map<number, number>();
+{
+  let whites = 0;
+  for (const key of KEYBOARD_LAYOUT) {
+    const lean = key.isBlack ? blackKeyLean(((key.midi % 12) + 12) % 12) : 0;
+    KEY_CENTER_OFFSET_UNITS.set(key.midi, whites + (key.isBlack ? lean : 0.5));
+    if (!key.isBlack) whites += 1;
+  }
+}
+
 /** Resolve one canvas-space point to the topmost physical piano key. */
 export function pianoKeyAtPoint(
   x: number,
@@ -79,24 +102,15 @@ export function pianoKeyAtPoint(
 }
 
 /**
- * Returns the normalized x position of a note on a standard 88-key piano.
- * Black keys are positioned between their neighbouring white keys.
+ * Returns the normalized x of a note's center on a standard 88-key piano, in
+ * units of one white-key width: whites sit mid-key, blacks sit on the
+ * boundary between their neighbouring whites with the shared real-piano lean
+ * of blackKeyLean(). The immersive scene's keyCenterX uses the identical
+ * convention, scaled to its layout.
  */
 export function noteXPosition(midi: number): number {
   if (midi < MIN_PIANO_MIDI || midi > MAX_PIANO_MIDI) {
     throw new RangeError(`midi ${midi} is outside piano range`);
   }
-  const isBlack = isBlackKey(midi);
-  const previousWhiteCount = KEYBOARD_LAYOUT.filter(
-    (key) => key.midi < midi && key.isBlack === false,
-  ).length;
-  if (isBlack) {
-    const whiteBefore = previousWhiteCount;
-    const whiteAfter = KEYBOARD_LAYOUT.filter(
-      (key) => key.midi > midi && key.isBlack === false,
-    ).length;
-    const position = whiteBefore - 0.5;
-    return position / (whiteBefore + whiteAfter);
-  }
-  return previousWhiteCount / 52;
+  return KEY_CENTER_OFFSET_UNITS.get(midi)! / WHITE_KEYS.length;
 }

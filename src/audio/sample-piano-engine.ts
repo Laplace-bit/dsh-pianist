@@ -1,3 +1,4 @@
+import { cancelAndHoldAutomation } from './cancel-and-hold.js';
 import {
   MissingSamplePackError,
   PianoSamplePack,
@@ -500,8 +501,7 @@ export class SamplePackPianoEngine implements PianoEngine {
     if (!voice.pendingDurationRelease) {
       return;
     }
-    voice.gain.gain.cancelScheduledValues(when);
-    voice.gain.gain.setValueAtTime(Math.max(SILENCE, voice.level), when);
+    cancelAndHoldAutomation(voice.gain.gain, when, SILENCE);
     try {
       // A later stop replaces the provisional release stop in Web Audio. The
       // source will then naturally end unless a later real note-off releases it.
@@ -528,8 +528,7 @@ export class SamplePackPianoEngine implements PianoEngine {
     if (includeReleaseLayer && !pendingDurationRelease) {
       this.startReleaseLayer(voice, when);
     }
-    voice.gain.gain.cancelScheduledValues(when);
-    voice.gain.gain.setValueAtTime(Math.max(SILENCE, voice.level), when);
+    cancelAndHoldAutomation(voice.gain.gain, when, SILENCE);
     const end = when + Math.max(releaseSeconds, 0.001);
     voice.gain.gain.exponentialRampToValueAtTime(SILENCE, end);
     try {
@@ -546,8 +545,7 @@ export class SamplePackPianoEngine implements PianoEngine {
     }
     // A seek or voice steal must shorten an already-planned natural tail;
     // otherwise old samples continue sounding after they left the voice map.
-    voice.gain.gain.cancelScheduledValues(when);
-    voice.gain.gain.setValueAtTime(Math.max(SILENCE, voice.level), when);
+    cancelAndHoldAutomation(voice.gain.gain, when, SILENCE);
     const end = when + Math.max(this.options.voiceStealReleaseSeconds, 0.001);
     voice.gain.gain.exponentialRampToValueAtTime(SILENCE, end);
     try {
