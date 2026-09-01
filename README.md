@@ -1,5 +1,7 @@
 # dsh-pianist
 
+[中文](./README.md) · [English](./README.en.md)
+
 dsh-pianist 为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）Web UI 带来一台会弹琴的 Agent：写代码累了，让 AI 弹一曲放松；它弹得多好，就是模型的本事。是玩具，也是考卷。
 
 项目主页：<https://laplace-bit.github.io/dsh-pianist/>
@@ -46,6 +48,19 @@ pnpm dsh web
 ```
 
 卸载：`pnpm dsh plugin --profile web remove dsh-pianist`（或 `dsh plugin --profile web remove dsh-pianist`）。
+
+## 内核兼容性
+
+| DSH 内核 | 本插件支持情况 |
+|---|---|
+| 0.1.0-rc.5 ～ 0.1.0-rc.7 | ✅ 全部版本 |
+| 0.1.1-rc.2 | ✅ 全部版本 |
+| 0.1.2-alpha.1 ～ 0.1.2-alpha.3 | ✅ 0.1.0（含 2026-09-01 兼容修复的构建）；此前发布版在 0.1.2 上加载失败 |
+
+- ✅ = 兼容。`0.1.2-alpha.3` 为当前宿主内核，已实测（产物导入 + 测试套件）；其余内核按双内核兼容设计支持（同一份构建、同一 API 面）。
+- **0.1.2 起内核移除了 `settingsNamespace()` 运行时助手**（≤ 0.1.1 上它只是个校验恒等函数，0.1.2 仅保留同名类型）。本插件不静态导入该符号，而是在注册设置命名空间时本地内联常量并断言为 `SettingsNamespace` 类型，新旧内核通用。
+- 当前构建不再静态导入 `settingsNamespace()`；此前发布版仅在 ≤ 0.1.1 内核上可用，请重新构建或更新至含修复的版本。
+- **不要对 `@deepseek-ai/*` 包的运行时符号做静态导入**。宿主 CLI 经 `node --import tsx/esm` 启动，tsx 会应用宿主 `tsconfig` 的 `paths` 映射，外部插件对 `@deepseek-ai/*` 的裸导入可能被重定向进宿主源码，一旦宿主侧改名/删符号就会以模块实例化错误的形式炸掉启动。类型导入（`import type`）不受影响。
 
 ## 使用
 
