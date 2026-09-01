@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { Context } from '@deepseek-ai/cordis';
 import type { ConnectionRpcHandler, ConnectionRpcHandlerOptions } from '@deepseek-ai/dsh-client-connection';
 import type { WebRoute, WebServer } from '@deepseek-ai/dsh-host-webserver';
-import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings';
+import { SettingsProvider, type SettingsNamespace } from '@deepseek-ai/dsh-settings';
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt';
 import ToolRuntime from '@deepseek-ai/dsh-tools';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -220,7 +220,7 @@ describe('dsh-pianist Host settings RPC', () => {
         },
       },
     });
-    expect(ctx.settings.get(settingsNamespace(PIANIST_SETTINGS_NS))).toEqual({
+    expect(ctx.settings.get((PIANIST_SETTINGS_NS as SettingsNamespace))).toEqual({
       ...DEFAULT_PIANIST_SETTINGS,
       volume: 0.31,
       events: { ...DEFAULT_PIANIST_SETTINGS.events, notes: false },
@@ -242,7 +242,7 @@ describe('dsh-pianist Host settings RPC', () => {
 
     const rejected = await registration.handler(PIANIST_SETTINGS_RPC.write, { volume: 0.4 }, signal());
     expect(rejected).toMatchObject({ ok: false, error: { code: 'settings-rejected' } });
-    expect(ctx.settings.get(settingsNamespace(PIANIST_SETTINGS_NS))).toEqual(DEFAULT_PIANIST_SETTINGS);
+    expect(ctx.settings.get((PIANIST_SETTINGS_NS as SettingsNamespace))).toEqual(DEFAULT_PIANIST_SETTINGS);
     await fiber.dispose();
   });
 

@@ -1,4 +1,4 @@
-import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client';
+import { createSnapshotStore, type SnapshotStore } from './clientStore.js';
 import {
   DEFAULT_PIANIST_SETTINGS,
   mergePianistSettings,

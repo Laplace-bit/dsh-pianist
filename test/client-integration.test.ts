@@ -3,7 +3,10 @@ import type { PianistCardFace } from '../src/client/pianist-card-controller.js';
 import { DEFAULT_PIANIST_SETTINGS } from '../src/shared/pianist-settings.js';
 import { PIANIST_SETTINGS_RPC, PIANIST_SETTINGS_RPC_CHANNEL } from '../src/shared/settings-api.js';
 
-vi.mock('@deepseek-ai/dsh-client-runtime/client', () => ({
+// The card controller imports the kernel-compat probe module, whose runtime
+// require bypasses vi.mock of the underlying specifier — mock the probe
+// module itself instead.
+vi.mock('../src/client/clientStore.js', () => ({
   createSnapshotStore<T>(initial: T) {
     let snapshot = initial;
     const listeners = new Set<() => void>();
